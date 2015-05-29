@@ -1,6 +1,6 @@
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
 /*  ChaCha20-Poly1305 implementation in JavaScript                							  	  */
-/*	(c) Manish Malik  2015					  													  */
+/*	(c) Manish Malik  2015	/ MIT Licence	  													  */
 /*                                                                                                */
 /*  - Reference																					  */
 /*			 https://www.rfc-editor.org/rfc/rfc7539.txt											  */
