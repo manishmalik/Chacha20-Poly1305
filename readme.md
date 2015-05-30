@@ -1,5 +1,5 @@
 <b>ChaCha20-Poly1305 Implementation</b>
-</br> In this repo I have implemented chacha20-poly1305. I have used IETF RFC 7539 as reference for implementing this repo.
+</br> In this repo I have implemented chacha20-poly1305. I have used IETF RFC 7539 as reference for implemention.
 
 </br></br><b>To-do:</b>
 <ul>Separate the unit test from the chacha20-poly1305.js</ul>
