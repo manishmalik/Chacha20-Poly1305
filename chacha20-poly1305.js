@@ -1,14 +1,14 @@
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
-/*  ChaCha20-Poly1305 implementation in JavaScript                							  	  */
-/*	(c) Manish Malik  2015	/ MIT Licence	  													  */
+/*  ChaCha20-Poly1305 implementation in JavaScript					  	  */
+/*	(c) Manish Malik  2015	/ MIT Licence							  */
 /*                                                                                                */
-/*  - Reference																					  */
-/*			 https://www.rfc-editor.org/rfc/rfc7539.txt											  */
-/*																								  */
-/*	In this implementation I have used : 														  */
-/*	JavaScript BigInteger library version 0.9 Copyright (c) 2009 Matthew Crumley				  */
-/*	https://github.com/silentmatt/javascript-biginteger-master									  */
-/*	for dealing with big integer arithmetics									                  */
+/*  - Reference											  */
+/*			 https://www.rfc-editor.org/rfc/rfc7539.txt				  */
+/*												  */
+/*	In this implementation I have used :							  */
+/*	JavaScript BigInteger library version 0.9 Copyright (c) 2009 Matthew Crumley		  */
+/*	https://github.com/silentmatt/javascript-biginteger-master				  */
+/*	for dealing with big integer arithmetics				                  */
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
 
 chacha={};
@@ -97,8 +97,9 @@ function test_quater_round_state(chacha)
 }
 
 /* Converting Serialize to Unserialized form 
-	@param  {string} input : serialized input array
-	@returns {string} 		: in little-endian order */
+	@param  {string} input	: serialized input array [xx:yy:zz:tt:...]
+	@returns {string}	: in little-endian order [ttzzyyxx,...]
+*/
 function unserialized(input)
 {
 	input=input.split(":");
@@ -113,8 +114,8 @@ function unserialized(input)
 	return matrix;
 }
 /* Converting to Serialized keystream
-	@param {array} input : Array of states in the hex forms
-	@returns {array)	  : Keystream in hex form
+	@param {array} input	: Array of states in the hex forms [ttzzyyxx]
+	@returns {array)	: Keystream in hex form [hexToInt(xx),hexToInt(yy),hexToInt(zz),hexToInt(tt)]
 */
 function serialized(input)
 {
@@ -158,7 +159,7 @@ function serialized(input)
 @param {String} key     : Key in string format "xx:xx:xx" 256 bits
 @param {Number} counter : Counter used to distinguish same nonce 32 bits
 @param {String} nonce   : Nonce in string format "xx:xx:xx" 96bits
-@returns {Array} 		 : Keystream in serialized order. It's an array of hex formated 512 bits keystreams.
+@returns {Array} 	: Keystream in serialized order. It's an array of hex formated 512 bits keystreams.
 */
 function chacha20_block(chacha,key,counter,nonce)
 {
@@ -215,7 +216,7 @@ function test_chacha20_block(chacha){
 @param {Number} counter    : Counter used to distinguish same nonce 32 bits
 @param {String} nonce      : Nonce in string format "xx:xx:xx" 96 bits
 @param	{String} plaintext : Plain text of arbitary length
-returns {Array}	 		   : Array of Encrypted/Decrypted of the input plaintext
+returns {Array}	 	   : Array of Encrypted/Decrypted of the input plaintext
 */
 function chacha20_encrypt_decrypt(chacha,key,counter,nonce,plaintext)
 {
@@ -327,9 +328,9 @@ function convertors(key)
 	return [r,s];
 }
 /* Poly1305 Algoritm 
-@param {string} msg 		  : contains the plaintext
-@param {string} key 		  : 256 bits one time key in octet forms "xx:xx:xx..."
-returns {array of string} mac : 128 bits tag in the little endian form 
+@param {string} msg 		: contains the plaintext
+@param {string} key 		: 256 bits one time key in octet forms "xx:xx:xx..."
+returns {array of string} mac	: 128 bits tag in the little endian form 
 */
 function poly1305_mac(msg,key)
 {
