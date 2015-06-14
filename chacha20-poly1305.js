@@ -1,11 +1,6 @@
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
-<<<<<<< HEAD
-/*  ChaCha20-Poly1305 implementation in JavaScript 												  */
-/*	(c) Manish Malik  2015	/ MIT Licence	  													  */
-=======
 /*  ChaCha20-Poly1305 implementation in JavaScript					  	  */
 /*	(c) Manish Malik  2015	/ MIT Licence							  */
->>>>>>> origin/master
 /*                                                                                                */
 /*  - Reference											  */
 /*			 https://www.rfc-editor.org/rfc/rfc7539.txt				  */
@@ -103,10 +98,6 @@ function test_quater_round_state(chacha)
 
 /* Converting Serialize to Unserialized form 
 	@param  {string} input	: serialized input array [xx:yy:zz:tt:...]
-<<<<<<< HEAD
-	@returns {string} 		: in little-endian order [ttzzyyxx,...]
-	*/
-=======
 	@returns {string}	: in little-endian order [ttzzyyxx,...]
 */
 >>>>>>> origin/master
@@ -125,11 +116,7 @@ function unserialized(input)
 }
 /* Converting to Serialized keystream
 	@param {array} input	: Array of states in the hex forms [ttzzyyxx]
-<<<<<<< HEAD
-	@returns {array)		: Keystream in hex form [hexToInt(xx),hexToInt(yy),hexToInt(zz),hexToInt(tt)]
-=======
 	@returns {array)	: Keystream in hex form [hexToInt(xx),hexToInt(yy),hexToInt(zz),hexToInt(tt)]
->>>>>>> origin/master
 */
 function serialized(input)
 {
@@ -171,15 +158,9 @@ function serialized(input)
 	where c: constant as defined in RFC 7539, k: key, b: block count, n: nonce 
 @param {Object} chacha  : Main object
 @param {String} key     : Key in string format "xx:xx:xx" 256 bits
-<<<<<<< HEAD
-@param {Number} counter : Counter used to distinguish same nonce 64 bits
-@param {String} nonce   : Nonce in string format "xx:xx:xx" 64bits
-@returns {Array} 		 : Keystream in serialized order. It's an array of hex formated 512 bits keystreams.
-=======
 @param {Number} counter : Counter used to distinguish same nonce 32 bits
 @param {String} nonce   : Nonce in string format "xx:xx:xx" 96bits
 @returns {Array} 	: Keystream in serialized order. It's an array of hex formated 512 bits keystreams.
->>>>>>> origin/master
 */
 function chacha20_block(chacha,key,counter,nonce)
 {
@@ -249,7 +230,7 @@ function test_chacha20_block(chacha){
 @param {String} key     : Key in string format "xx:xx:xx" 256 bits
 @param {Number} counter : Counter used to distinguish same nonce 64 bits
 @param {String} nonce   : Nonce in string format "xx:xx:xx" 192 bits
-@returns {Array} 		: Keystream in serialized order. It's an array of hex formated 512 bits keystreams.
+@returns {Array} 	: Keystream in serialized order. It's an array of hex formated 512 bits keystreams.
 */
 function xchacha20_block(chacha,key,counter,nonce){
 	keystream=chacha20_block(chacha,key,nonce.substring(0,23),nonce.substring(24,47));
@@ -547,7 +528,6 @@ function rspamd_encrypt(pk,sk,nonce,msg)
 	sig=poly1305_mac(ctx,subkey);
 	return [ctx,sig];
 }
-//function rspamd_decrypt(pk,sk,)
-=======
+//function rspamd_decrypt(pk,sk,);
 test_poly1305_key();
->>>>>>> origin/master
+
