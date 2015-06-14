@@ -1,5 +1,5 @@
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
-/*  ChaCha20-Poly1305 implementation in JavaScript                							  	  */
+/*  ChaCha20-Poly1305 implementation in JavaScript 												  */
 /*	(c) Manish Malik  2015	/ MIT Licence	  													  */
 /*                                                                                                */
 /*  - Reference																					  */
@@ -97,8 +97,9 @@ function test_quater_round_state(chacha)
 }
 
 /* Converting Serialize to Unserialized form 
-	@param  {string} input : serialized input array
-	@returns {string} 		: in little-endian order */
+	@param  {string} input	: serialized input array [xx:yy:zz:tt:...]
+	@returns {string} 		: in little-endian order [ttzzyyxx,...]
+	*/
 function unserialized(input)
 {
 	input=input.split(":");
@@ -113,8 +114,8 @@ function unserialized(input)
 	return matrix;
 }
 /* Converting to Serialized keystream
-	@param {array} input : Array of states in the hex forms
-	@returns {array)	  : Keystream in hex form
+	@param {array} input	: Array of states in the hex forms [ttzzyyxx]
+	@returns {array)		: Keystream in hex form [hexToInt(xx),hexToInt(yy),hexToInt(zz),hexToInt(tt)]
 */
 function serialized(input)
 {
@@ -148,7 +149,7 @@ function serialized(input)
 	}
 	return keystream;
 }
-/* ChaCha20 Block Function where the words are arranged as: 
+/* ChaCha20 Block Function where the words(4x4 matrix) are arranged as: 
 			cccccccc  cccccccc  cccccccc  cccccccc
 			kkkkkkkk  kkkkkkkk  kkkkkkkk  kkkkkkkk
 			kkkkkkkk  kkkkkkkk  kkkkkkkk  kkkkkkkk
@@ -156,8 +157,8 @@ function serialized(input)
 	where c: constant as defined in RFC 7539, k: key, b: block count, n: nonce 
 @param {Object} chacha  : Main object
 @param {String} key     : Key in string format "xx:xx:xx" 256 bits
-@param {Number} counter : Counter used to distinguish same nonce 32 bits
-@param {String} nonce   : Nonce in string format "xx:xx:xx" 96bits
+@param {Number} counter : Counter used to distinguish same nonce 64 bits
+@param {String} nonce   : Nonce in string format "xx:xx:xx" 64bits
 @returns {Array} 		 : Keystream in serialized order. It's an array of hex formated 512 bits keystreams.
 */
 function chacha20_block(chacha,key,counter,nonce)
@@ -171,9 +172,17 @@ function chacha20_block(chacha,key,counter,nonce)
 		matrix[i]=constant[i];
 	for(var i=0;i<8;i++)
 		matrix[i+4]=parseInt(key_matrix[i],16);
-	matrix[12]=counter;
-	for (var i = 0; i < 3; i++)
-		matrix[i+13]=parseInt(nonce_matrix[i],16);
+	//matrix[12]=counter;
+	temp=toString(counter,16);
+	if(temp.length>8)
+	{
+		temp1=temp.substring(0,7);
+		matrix[13]=parseInt(temp1,16);
+		temp1=temp.substring(8,15);
+		matrix[12]=parseInt(temp1,16);
+	}
+	for (var i = 0; i < 2; i++)
+		matrix[i+14]=parseInt(nonce_matrix[i],16);
 	/* JS creates shallow copies of the object or array by default(on state=matrix).So,here Deep copies are made*/
 	state=new Array(16);
 	for(var i=0 ;i <16 ; i++)
@@ -206,14 +215,43 @@ function chacha20_block(chacha,key,counter,nonce)
 function test_chacha20_block(chacha){
 	Key = "00:01:02:03:04:05:06:07:08:09:0a:0b:0c:0d:0e:0f:10:11:12:13:14:15:16:17:18:19:1a:1b:1c:1d:1e:1f";
 	nonce="00:00:00:09:00:00:00:4a:00:00:00:00";
-	counter=1;
+	counter=0x6b2065745;
 	console.log(chacha20_block(chacha,Key,counter,nonce));
 }
-/* ChaCha20 Encryption/Decryption Algorithm as described in RFC7539
+/* xchacha20 : chacha20 variant which uses 192 bits nonce.
+	its pseudo-code :
+
+			 	keystream=chacha20_block(chacha,key,nonce[0-63],nonce[64-127])
+				subkey=keystream[0-255]
+				returns chacha20_block(chacha,subkey,counter,nonce[128-191])
+
+@param {Object} chacha 	: Main object
+@param {String} key     : Key in string format "xx:xx:xx" 256 bits
+@param {Number} counter : Counter used to distinguish same nonce 64 bits
+@param {String} nonce   : Nonce in string format "xx:xx:xx" 192 bits
+@returns {Array} 		: Keystream in serialized order. It's an array of hex formated 512 bits keystreams.
+*/
+function xchacha20_block(chacha,key,counter,nonce){
+	keystream=chacha20_block(chacha,key,nonce.substring(0,23),nonce.substring(24,47));
+	subkey=[];
+	for(var i=0;i<32;i++)
+	{
+		subkey[i]=keystream[i].toString(16);
+		
+		if(subkey[i].length<2)
+			subkey[i]="0"+subkey[i];
+	}
+	sub_key=subkey.join(":");
+	keystream=chacha20_block(chacha,sub_key,counter,nonce.substring(48));
+	//console.log(keystream);
+	return keystream;
+}
+
+/* ChaCha20 Encryption/Decryption Algorithm as used in rspamd ref.c
 @param {object} chacha     : chacha object used for passing reference
 @param {String} key        : Key in string format "xx:xx:xx" 256 bits
-@param {Number} counter    : Counter used to distinguish same nonce 32 bits
-@param {String} nonce      : Nonce in string format "xx:xx:xx" 96 bits
+@param {Number} counter    : Counter used to distinguish same nonce 64 bits
+@param {String} nonce      : Nonce in string format "xx:xx:xx" 64 bits
 @param	{String} plaintext : Plain text of arbitary length
 returns {Array}	 		   : Array of Encrypted/Decrypted of the input plaintext
 */
@@ -225,7 +263,7 @@ function chacha20_encrypt_decrypt(chacha,key,counter,nonce,plaintext)
 	encrypted_message=[];
 	for(var i=0; i<len;i++)
 	{
-		key_stream=chacha20_block(chacha,key,counter+i,nonce);
+		key_stream=xchacha20_block(chacha,key,counter+i,nonce);
 		for(var j=0;j<64;j++)
 		{
 			block[j]=plaintext[i*64+j].charCodeAt();
@@ -236,7 +274,7 @@ function chacha20_encrypt_decrypt(chacha,key,counter,nonce,plaintext)
 	if(((plaintext.length)%64) != 0 )
 	{
 		i=len;
-		key_stream=chacha20_block(chacha,key,counter+i,nonce);
+		key_stream=xchacha20_block(chacha,key,counter+i,nonce);
 		for(var j=0;j<(plaintext.length)%64;j++)
 		{
 			block[j]=plaintext[i*64+j].charCodeAt();
@@ -248,9 +286,9 @@ function chacha20_encrypt_decrypt(chacha,key,counter,nonce,plaintext)
 
 function test_chacha20_encrypt_decrypt()
 {
-	key ="00:01:02:03:04:05:06:07:08:09:0a:0b:0c:0d:0e:0f:10:11:12:13:14:15:16:17:18:19:1a:1b:1c:1d:1e:1f"
-	nonce="00:00:00:00:00:00:00:4a:00:00:00:00";
-	counter=1;
+	key = "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00";
+	nonce="00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00";
+	counter=0x6b2065745;
 	plaintext="Ladies and Gentlemen of the class of '99: If I could offer you only one tip for the future, sunscreen would be it. \n -m2n";
 	enc=chacha20_encrypt_decrypt(chacha,key,counter,nonce,plaintext);
 	
@@ -270,6 +308,7 @@ function test_chacha20_encrypt_decrypt()
 	d=decrpyted_message.join("");
 	console.log("\n Decrypted Message : \n "+d);
 }
+test_chacha20_encrypt_decrypt();
 /* For clamping the fix values of the r */
 function clamp(r)
 {
@@ -355,6 +394,7 @@ function poly1305_mac(msg,key)
 	s=big.BigInteger.parse(s,16);
 	r=big.BigInteger.parse(r,16);
 	a=big.BigInteger();
+	/* p= 2^130 -5 */
 	p=big.BigInteger.parse('3fffffffffffffffffffffffffffffffb',16);
 	for(var i=0; i< Math.floor(msg.length/16);i++)
 	{
@@ -418,6 +458,7 @@ function test_poly1305_mac()
 	tag=poly1305_mac(msg,key);
 	console.log(tag);
 }	
+test_poly1305_mac();
 /* Poly1305 key generator using ChaCha20 Block Functions
 @param {string} key       : 256 bits key in hex octets form (xx:xx:xx)
 @param {string} nonce     : 96 bits nonce in hex octets form (xx:xx:xx)
@@ -451,4 +492,38 @@ function test_poly1305_key()
 	poly1305_key=poly1305_key_gen(key,nonce);
 	console.log(poly1305_key);
 }
-test_poly1305_key();
+/* Poly1305 tag verifier.
+@param {Array of String}mac1 : Tag in the form {'XX':'XX':'XX':'XX'}
+@param {Array of String}mac2 : Tag in the form {'XX':'XX':'XX':'XX'}
+returns {Int}				 : 1 - Mac Verified , 0 - Mac doesn't Match
+*/
+function poly1305_verify(mac1,mac2)
+{
+	diff=0;
+	for(var i=0;i<16;i++)
+	{
+		diff|= mac1[i].toString(16) ^ mac2[i].toString(16);
+	}
+
+	diff=(diff - 1) >> 255;
+
+	return diff & 1;
+}
+/* rspamd encryption, it uses curve25519-xchacha20-poly1305 encryption.
+@param {string}pk 		: 256 bits Public Key in hex octets form (xx:xx:xx)
+@param {string}sk 		: 256 bits Secret Key in hex octets form (xx:xx:xx)
+@param {string}nonce 	: 192 bits Nonce in hex octets form (xx:xx:xx)
+@param {string}msg 		: Arbitary length message
+*/	
+function rspamd_encrypt(pk,sk,nonce,msg)
+{
+	// TODO: Include the function which calculates the Shared Secret Key using Curve25519
+	//temporary hack : shared secret key = secret key
+	shared_secretk=sk;
+	subkey=xchacha20_block(chacha,shared_secretk,0,nonce);
+	subkey=subkey.slice(0,32);
+	ctx=chacha20_encrypt_decrypt(chacha,shared_secretk,1,nonce);
+	sig=poly1305_mac(ctx,subkey);
+	return [ctx,sig];
+}
+//function rspamd_decrypt(pk,sk,)
